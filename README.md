@@ -4,6 +4,10 @@ Automatically generate realistic test orders for FluentCart on a configurable sc
 
 [![Download Latest Release](https://img.shields.io/github/v/release/shamim0902/fluent-cart-simulator?label=Download%20Latest&style=for-the-badge&color=0073aa)](https://github.com/shamim0902/fluent-cart-simulator/releases/latest/download/fluent-cart-simulator.zip)
 
+You will get every update from the latest version:
+![updater](https://github.com/user-attachments/assets/0687404d-b293-49cc-b402-25b2fffef02b)
+
+
 ## Requirements
 
 - WordPress 5.6+
