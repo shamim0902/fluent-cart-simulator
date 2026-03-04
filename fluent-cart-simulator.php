@@ -5,7 +5,7 @@ defined('ABSPATH') || exit('Direct access not allowed.');
 /*
 Plugin Name: FluentCart Order Simulator
 Description: Automatically generates test orders for FluentCart on a configurable schedule. A developer tool for testing at scale.
-Version: 1.0.0
+Version: 1.0.1
 Author: FluentCart Team
 Author URI: https://fluentcart.com
 Plugin URI: https://fluentcart.com
@@ -13,7 +13,7 @@ License: GPLv2 or later
 Text Domain: fluent-cart-simulator
 */
 
-define('FCSIM_VERSION', '1.0.0');
+define('FCSIM_VERSION', '1.0.1');
 define('FCSIM_PLUGIN_FILE', __FILE__);
 define('FCSIM_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('FCSIM_PLUGIN_URL', plugin_dir_url(__FILE__));

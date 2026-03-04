@@ -199,7 +199,6 @@ class OrderGenerator
             'fulfillment_type'      => $fulfillmentType,
             'created_at'            => $createdDate,
             'completed_at'          => $completedAt,
-            'config'                => ['simulated' => true, 'simulator_version' => FCSIM_VERSION],
         ];
 
         $order = Order::query()->create($orderData);
@@ -207,6 +206,9 @@ class OrderGenerator
         if (!$order || !$order->id) {
             return null;
         }
+
+        // Mark as simulated via order meta (reliable, survives config overwrites)
+        $order->updateMeta('_fcsim_simulated', FCSIM_VERSION);
 
         // 7. Create order items
         foreach ($tempOrderItems as &$item) {
