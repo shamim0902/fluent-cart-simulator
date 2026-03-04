@@ -55,6 +55,26 @@ add_action('plugins_loaded', function () {
 
     (new \FluentCartSimulator\SimulatorAdmin())->register();
     (new \FluentCartSimulator\SimulatorScheduler())->register();
+
+    // GitHub auto-updater
+    new \FluentCartSimulator\PluginManager\GitHubUpdater(
+        FCSIM_PLUGIN_FILE,
+        'shamim0902/fluent-cart-simulator',
+        FCSIM_VERSION
+    );
+
+    // "Check Update" link in plugin row
+    add_filter('plugin_row_meta', function ($links, $pluginFile) {
+        if (plugin_basename(FCSIM_PLUGIN_FILE) !== $pluginFile) {
+            return $links;
+        }
+
+        $checkUpdateUrl = esc_url(admin_url('plugins.php?fcsim-check-update=' . time()));
+
+        $links['check_update'] = '<a style="color: #583fad;font-weight: 600;" href="' . $checkUpdateUrl . '">' . esc_html__('Check Update', 'fluent-cart-simulator') . '</a>';
+
+        return $links;
+    }, 10, 2);
 }, 20);
 
 register_deactivation_hook(__FILE__, function () {
