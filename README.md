@@ -2,7 +2,10 @@
 
 Automatically generate realistic test orders for FluentCart on a configurable schedule. A developer tool for testing reports, emails, exports, and performance at scale.
 
-[![Download Latest Release](https://img.shields.io/github/v/release/shamim0902/fluent-cart-simulator?label=Download%20Latest&style=for-the-badge&color=0073aa)](https://github.com/shamim0902/fluent-cart-simulator/releases/latest/download/fluent-cart-simulator.zip)
+<img width="1247" height="719" alt="image" src="https://github.com/user-attachments/assets/4c2f7d33-19b1-4124-aa6e-ac7025ab0e8b" />
+
+
+
 
 You will get every update from the latest version:
 ![updater](https://github.com/user-attachments/assets/0687404d-b293-49cc-b402-25b2fffef02b)
@@ -15,6 +18,10 @@ You will get every update from the latest version:
 - FluentCart 1.2.5+
 
 ## Installation
+
+
+[![Download Latest Release](https://img.shields.io/github/v/release/shamim0902/fluent-cart-simulator?label=Download%20Latest&style=for-the-badge&color=0073aa)](https://github.com/shamim0902/fluent-cart-simulator/releases/latest/download/fluent-cart-simulator.zip)
+
 
 1. Download the latest release zip from the button above (or from [Releases](https://github.com/shamim0902/fluent-cart-simulator/releases))
 2. In WordPress admin, go to **Plugins > Add New > Upload Plugin**
