@@ -3,6 +3,9 @@
 namespace FluentCartSimulator;
 
 use FluentCart\Api\StoreSettings;
+use FluentCart\App\Events\Order\OrderCreated;
+use FluentCart\App\Events\Order\OrderPaid;
+use FluentCart\App\Helpers\Status;
 use FluentCart\App\Models\Customer;
 use FluentCart\App\Models\Order;
 use FluentCart\App\Models\OrderItem;
@@ -194,8 +197,8 @@ class OrderGenerator
             'total_paid'            => $totalPaid,
             'total_refund'          => $totalRefund,
             'status'                => $status,
-            'mode'                  => 'test',
-            'type'                  => 'payment',
+            'mode'                  => Status::ORDER_MODE_TEST,
+            'type'                  => Status::ORDER_TYPE_PAYMENT,
             'fulfillment_type'      => $fulfillmentType,
             'created_at'            => $createdDate,
             'completed_at'          => $completedAt,
@@ -220,18 +223,67 @@ class OrderGenerator
 
         // 8. Create transaction
         $transactionStatus = self::deriveTransactionStatus($paymentStatus);
-        OrderTransaction::query()->create([
-            'order_id'       => $order->id,
-            'order_type'     => 'payment',
-            'payment_method' => $paymentMethod,
-            'payment_mode'   => 'test',
-            'status'         => $transactionStatus,
-            'currency'       => $currency,
-            'total'          => $totalPaid ?: $totalPrice,
-            'created_at'     => $createdDate,
+        $transaction = OrderTransaction::query()->create([
+            'order_id'          => $order->id,
+            'order_type'        => Status::ORDER_TYPE_PAYMENT,
+            'payment_method'    => $paymentMethod,
+            'payment_mode'      => Status::ORDER_MODE_TEST,
+            'transaction_type'  => Status::TRANSACTION_TYPE_CHARGE,
+            'status'            => $transactionStatus,
+            'currency'          => $currency,
+            'total'             => $totalPaid ?: $totalPrice,
+            'created_at'        => $createdDate,
         ]);
 
+        self::dispatchLifecycleEvents($order, $transaction, $paymentStatus);
+
         return $order;
+    }
+
+    private static function dispatchLifecycleEvents(Order $order, $transaction, $paymentStatus)
+    {
+        $order = Order::query()
+            ->with(['customer', 'order_items', 'shipping_address', 'billing_address'])
+            ->find($order->id);
+
+        if (!$order) {
+            return;
+        }
+
+        (new OrderCreated($order, null, $order->customer, $transaction))->dispatch();
+
+        if (!$transaction || !in_array($transaction->status, Status::getTransactionSuccessStatuses(), true)) {
+            return;
+        }
+
+        $eventData = [
+            'order'       => $order,
+            'customer'    => $order->customer,
+            'transaction' => $transaction,
+        ];
+
+        do_action('fluent_cart/payment_' . $paymentStatus, $eventData);
+
+        if (!empty($transaction->transaction_type)) {
+            do_action('fluent_cart/payment_' . $transaction->transaction_type . '_' . $paymentStatus, $eventData);
+        }
+
+        if ($paymentStatus !== Status::PAYMENT_PAID) {
+            return;
+        }
+
+        (new OrderPaid($order, $order->customer, $transaction))->dispatch();
+
+        if (self::shouldRunPaidActionsInline()) {
+            do_action('fluent_cart/order_paid_ansyc_private_handle', [
+                'order_id' => $order->id,
+            ]);
+        }
+    }
+
+    private static function shouldRunPaidActionsInline()
+    {
+        return function_exists('doing_action') && doing_action(SimulatorScheduler::HOOK_NAME);
     }
 
     private static function pickWeightedStatus(array $distribution)

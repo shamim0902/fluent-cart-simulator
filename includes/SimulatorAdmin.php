@@ -7,6 +7,7 @@ class SimulatorAdmin
     public function register()
     {
         add_action('admin_menu', [$this, 'addAdminMenu']);
+        add_action('admin_bar_menu', [$this, 'addAdminBarMenu'], 120);
 
         add_action('wp_ajax_fcsim_save_settings', [$this, 'ajaxSaveSettings']);
         add_action('wp_ajax_fcsim_generate_now', [$this, 'ajaxGenerateNow']);
@@ -25,6 +26,45 @@ class SimulatorAdmin
             'fluent-cart-simulator',
             [$this, 'renderSettingsPage']
         );
+    }
+
+    public function addAdminBarMenu($wpAdminBar)
+    {
+        if (!is_admin_bar_showing() || !current_user_can('manage_options')) {
+            return;
+        }
+
+        $settings = self::getSettings();
+        $ordersPerHour = intval($settings['orders_per_hour'] ?? 0);
+
+        $parentId = null;
+        if (method_exists($wpAdminBar, 'get_node')) {
+            if ($wpAdminBar->get_node('fluent_cart_live_mode')) {
+                $parentId = 'fluent_cart_live_mode';
+            } elseif ($wpAdminBar->get_node('fluent_cart_test_mode')) {
+                $parentId = 'fluent_cart_test_mode';
+            }
+        }
+
+        $title = __('FC Simulator', 'fluent-cart-simulator');
+        if ($ordersPerHour > 0) {
+            $title .= sprintf(' (%d/hr)', $ordersPerHour);
+        }
+
+        $args = [
+            'id'    => 'fluent_cart_simulator',
+            'title' => esc_html($title),
+            'href'  => esc_url(admin_url('tools.php?page=fluent-cart-simulator')),
+            'meta'  => [
+                'title' => __('Open FluentCart Simulator', 'fluent-cart-simulator')
+            ]
+        ];
+
+        if ($parentId) {
+            $args['parent'] = $parentId;
+        }
+
+        $wpAdminBar->add_node($args);
     }
 
     public function renderSettingsPage()
