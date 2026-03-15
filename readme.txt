@@ -2,9 +2,9 @@
 Contributors: fluentcart
 Tags: fluentcart, simulator, test data, orders, development
 Requires at least: 5.6
-Tested up to: 6.7
+Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -91,6 +91,16 @@ All scheduled generation events are cleared. Simulated orders already in the dat
 No. This plugin is built exclusively for FluentCart and has no WooCommerce dependency.
 
 == Changelog ==
+
+= 1.0.3 =
+* Added billing and shipping address generation for orders (fct_order_addresses)
+* Added customer address records (fct_customer_addresses) with billing and optional shipping
+* Added realistic street addresses (address_1, address_2) to customers and orders
+* Added phone number generation stored in order address meta
+* Added IP address to simulated orders
+* Added proper ISO state/province codes per country instead of random US state names
+* Fixed pluck() Collection-vs-array compatibility in getRandomExistingCustomer()
+* Purge now also cleans up customer address records
 
 = 1.0.0 =
 * Initial release

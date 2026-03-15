@@ -8,6 +8,7 @@ use FluentCart\App\Events\Order\OrderPaid;
 use FluentCart\App\Helpers\Status;
 use FluentCart\App\Models\Customer;
 use FluentCart\App\Models\Order;
+use FluentCart\App\Models\OrderAddress;
 use FluentCart\App\Models\OrderItem;
 use FluentCart\App\Models\OrderTransaction;
 use FluentCart\App\Models\Product;
@@ -185,6 +186,8 @@ class OrderGenerator
         $currency = self::getStoreCurrency();
 
         // 6. Create the order
+        $ipAddress = wp_rand(1, 255) . '.' . wp_rand(0, 255) . '.' . wp_rand(0, 255) . '.' . wp_rand(1, 254);
+
         $orderData = [
             'parent_id'             => 0,
             'customer_id'           => $customerId,
@@ -200,6 +203,7 @@ class OrderGenerator
             'mode'                  => Status::ORDER_MODE_TEST,
             'type'                  => Status::ORDER_TYPE_PAYMENT,
             'fulfillment_type'      => $fulfillmentType,
+            'ip_address'            => $ipAddress,
             'created_at'            => $createdDate,
             'completed_at'          => $completedAt,
         ];
@@ -212,6 +216,9 @@ class OrderGenerator
 
         // Mark as simulated via order meta (reliable, survives config overwrites)
         $order->updateMeta('_fcsim_simulated', FCSIM_VERSION);
+
+        // 6b. Create order addresses (billing + shipping)
+        self::createOrderAddresses($order->id, $customerId, $createdDate);
 
         // 7. Create order items
         foreach ($tempOrderItems as &$item) {
@@ -284,6 +291,36 @@ class OrderGenerator
     private static function shouldRunPaidActionsInline()
     {
         return function_exists('doing_action') && doing_action(SimulatorScheduler::HOOK_NAME);
+    }
+
+    private static function createOrderAddresses($orderId, $customerId, $createdDate)
+    {
+        $addresses = CustomerGenerator::getCustomerAddressData($customerId);
+
+        foreach (['billing', 'shipping'] as $type) {
+            $source = $addresses[$type] ?? null;
+            if (!$source) {
+                continue;
+            }
+
+            $meta = [];
+            if (!empty($source->phone)) {
+                $meta['other_data']['phone'] = $source->phone;
+            }
+
+            OrderAddress::query()->create([
+                'order_id'   => $orderId,
+                'type'       => $type,
+                'name'       => $source->name ?? '',
+                'address_1'  => $source->address_1 ?? '',
+                'address_2'  => $source->address_2 ?? '',
+                'city'       => $source->city ?? '',
+                'state'      => $source->state ?? '',
+                'postcode'   => $source->postcode ?? '',
+                'country'    => $source->country ?? '',
+                'meta'       => $meta,
+            ]);
+        }
     }
 
     private static function pickWeightedStatus(array $distribution)

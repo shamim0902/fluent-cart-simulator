@@ -14,8 +14,22 @@ class PurgeHandler
             return ['deleted' => 0, 'message' => 'No simulated orders found.'];
         }
 
-        $totalDeleted = 0;
+        // Collect customer IDs from simulated orders before deleting
+        $allCustomerIds = [];
         $ordersTable = $wpdb->prefix . 'fct_orders';
+        foreach (array_chunk($orderIds, 500) as $idChunk) {
+            $ph = implode(',', array_fill(0, count($idChunk), '%d'));
+            $cids = $wpdb->get_col($wpdb->prepare(
+                "SELECT DISTINCT customer_id FROM {$ordersTable} WHERE id IN ({$ph})",
+                ...$idChunk
+            ));
+            if ($cids) {
+                $allCustomerIds = array_merge($allCustomerIds, $cids);
+            }
+        }
+        $allCustomerIds = array_unique(array_filter($allCustomerIds));
+
+        $totalDeleted = 0;
 
         foreach (array_chunk($orderIds, 500) as $chunk) {
             $placeholders = implode(',', array_fill(0, count($chunk), '%d'));
@@ -65,6 +79,20 @@ class PurgeHandler
                 ...$chunk
             ));
             $totalDeleted += (int) $deleted;
+        }
+
+        // Delete customer addresses for simulated customers
+        if (!empty($allCustomerIds)) {
+            $custAddrTable = $wpdb->prefix . 'fct_customer_addresses';
+            if ($wpdb->get_var("SHOW TABLES LIKE '{$custAddrTable}'") === $custAddrTable) {
+                foreach (array_chunk($allCustomerIds, 500) as $custChunk) {
+                    $ph = implode(',', array_fill(0, count($custChunk), '%d'));
+                    $wpdb->query($wpdb->prepare(
+                        "DELETE FROM {$custAddrTable} WHERE customer_id IN ({$ph})",
+                        ...$custChunk
+                    ));
+                }
+            }
         }
 
         update_option('fcsim_stats', [
